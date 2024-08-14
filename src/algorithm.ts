@@ -34,3 +34,28 @@ export function getBucketRange(buckets: Array<Set<Flashcard>>): ReadonlyArray<nu
     }
     return new Array(low, high);
 }
+
+/**
+ * Generate a sequence of flashcards for practice on a particular day.
+    @param day day of the learning process. Must be integer >= 1.
+    @param bucket a list of disjoint sets representing learning buckets, where buckets[i] is the set of cards in the ith bucket for all 0 <= i <= retiredBucket.
+    @param retiredBucket number of retired bucket. Must be an integer >= 0.
+    @returns an array of flashcards for practice on a particular day
+    */
+
+export function practice(day: number, buckets: Array<Set<Flashcard>>, retiredBucket: number): ReadonlyArray<Flashcard> {
+    let flashcardPractice: Array<Flashcard> = new Array<Flashcard> ();
+    for (let i: number = 0; i < buckets.length; i++){
+        if (i === retiredBucket){
+            break;
+        }
+        let dayToRepeat: number = Math.pow(2, i);
+        if (day % dayToRepeat != 0){
+            continue;
+        }
+        for (const j of buckets[i]){
+            flashcardPractice.push(j);
+        }
+    }
+    return flashcardPractice;
+}
