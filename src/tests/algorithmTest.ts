@@ -1,6 +1,6 @@
 import assert from "assert";
-import { Flashcard} from "../flashcards.js";
-import { toBucketSets, getBucketRange, practice } from "../algorithm.js";
+import { AnswerDifficulty, Flashcard} from "../flashcards.js";
+import { toBucketSets, getBucketRange, practice, update } from "../algorithm.js";
 
 let flashcardDeck: Array<Flashcard> = new Array<Flashcard> ();
     flashcardDeck.push(new Flashcard("DRY", "Don't Repeat Yourself"));
@@ -10,14 +10,22 @@ let flashcardDeck: Array<Flashcard> = new Array<Flashcard> ();
     flashcardDeck.push(new Flashcard("ADT", "Abstract Data Types"));
 
 function createBucketSets(ordering: Array<number>): Array<Set<Flashcard>> {
-    let output: Array<Set<Flashcard>> = new Array<Set<Flashcard>> ();
+    let BucketSets: Array<Set<Flashcard>> = new Array<Set<Flashcard>> ();
     for (let i:number = 0; i < ordering.length; i++) {
-        while (output.length <= ordering[i]){
-            output.push(new Set<Flashcard> ());
+        while (BucketSets.length <= ordering[i]){
+            BucketSets.push(new Set<Flashcard> ());
         }
-        output[ordering[i]].add(flashcardDeck[i]);
+        BucketSets[ordering[i]].add(flashcardDeck[i]);
     }
-    return output;
+    return BucketSets;
+}
+
+function createBucketMap(ordering: Array<number>): Map<Flashcard, number> {
+    let BucketMap: Map<Flashcard, number> = new Map<Flashcard, number> ();
+    for (let i:number = 0; i < ordering.length; i++) {
+        BucketMap.set(flashcardDeck[i], ordering[i]);
+    }
+    return BucketMap;
 }
 
 describe("toBucketSets", function() {
@@ -37,12 +45,7 @@ describe("toBucketSets", function() {
     });
     it("covers non empty bucketMap, " +
         "the case where there exist an integer 0 <= i < bucketSet.length and bucketSet[i] is an emtpy set", function() {        
-        const bucketMap: Map<Flashcard, number> = new Map<Flashcard, number> ();
-        bucketMap.set(flashcardDeck[0], 0);
-        bucketMap.set(flashcardDeck[1], 0);
-        bucketMap.set(flashcardDeck[2], 1);
-        bucketMap.set(flashcardDeck[3], 3);
-
+        const bucketMap: Map<Flashcard, number> = createBucketMap([0,0,1,3]);
         const bucketSets: Array<Set<Flashcard>> = createBucketSets([0,0,1,3])
 
         assert.deepStrictEqual(toBucketSets(bucketMap), bucketSets);
@@ -78,7 +81,7 @@ describe("getBucketRange", function() {
 });
 
 describe("practice", function() {
-    /**
+    /*
      * Testing strategy
      * 
      * partition on day:
@@ -102,12 +105,14 @@ describe("practice", function() {
         
         const flashcardSet: ReadonlyArray<Flashcard> = practice(2, bucket, 10);
         assert.strictEqual(flashcardSet.length, 3);
-        assert(flashcardSet.includes(flashcardDeck[0]));
-        assert(flashcardSet.includes(flashcardDeck[1]));
-        assert(flashcardSet.includes(flashcardDeck[4]));
+        assert(flashcardSet.includes(flashcardDeck[0]), "a card that should be included is not included");
+        assert(flashcardSet.includes(flashcardDeck[1]), "a card that should be included is not included");
+        assert(flashcardSet.includes(flashcardDeck[4]), "a card that should be included is not included");
+        assert(!flashcardSet.includes(flashcardDeck[2]), "a card that should not be included is included");
+        assert(!flashcardSet.includes(flashcardDeck[3]), "a card that should not be included is included");
     });
     it("covers day == 1, " +
-        "empty buckets" +
+        "empty buckets, " +
         "bucket.length < retiredBucket", function() {
         
         const bucket: Array<Set<Flashcard>> = createBucketSets([]);
@@ -115,15 +120,71 @@ describe("practice", function() {
         assert.strictEqual(flashcardSet.length, 0);
     });
     it("covers day != 1, " +
-        "non empty buckets" +
+        "non empty buckets, " +
         "bucket.length >= retiredBucket", function() {
         
         const bucket: Array<Set<Flashcard>> = createBucketSets([0,0,3,2,2]);
         const flashcardSet: ReadonlyArray<Flashcard> = practice(8, bucket, 3);
         assert.strictEqual(flashcardSet.length, 4);
-        assert(flashcardSet.includes(flashcardDeck[0]));
-        assert(flashcardSet.includes(flashcardDeck[1]));
-        assert(flashcardSet.includes(flashcardDeck[3]));
-        assert(flashcardSet.includes(flashcardDeck[4]));
+        assert(flashcardSet.includes(flashcardDeck[0]), "a card that should be included is not included");
+        assert(flashcardSet.includes(flashcardDeck[1]), "a card that should be included is not included");
+        assert(flashcardSet.includes(flashcardDeck[3]), "a card that should be included is not included");
+        assert(flashcardSet.includes(flashcardDeck[4]), "a card that should be included is not included");
+        assert(!flashcardSet.includes(flashcardDeck[2]), "a card that should not be included is included");
+    });
+});
+
+describe("update", function() {
+    /**
+     * Testing strategy
+     * 
+     * partition on answer:
+     *  answer = AnswerDifficulty.EASY
+     *  answer = AnswerDifficulty.HARD
+     *  answer = AnswerDifficulty.WRONG
+     * 
+     * partition on retriedBucket, card, and bucketMap:
+     *  card is updated to a retiredBucket
+     *  card is not updated to a retriedBucket
+     * 
+     * parititon on answer and bucketMap:
+     *  card is currently at bucket zero and answer = AnswerDifficulty.HARD
+     *  card is currently not at bucket zero or answer != AnswerDifficulty.HARD
+     */
+    it("covers answer = AnswerDifficulty.EASY, " +
+        "card is updated to a retriedBucket, " +
+        "card is currently not at bucket zero or answer != AnswerDifficulty.HARD", function() {
+        let bucketMap: Map<Flashcard, number> = createBucketMap([0,1,2,3,4]);
+
+        update(flashcardDeck[3], AnswerDifficulty.EASY, bucketMap, 4);
+        assert.deepStrictEqual(bucketMap.get(flashcardDeck[3]), 4, "card updated to wrong bucket");
+        assert.deepStrictEqual(bucketMap.get(flashcardDeck[0]), 0, "updated wrong card");
+        assert.deepStrictEqual(bucketMap.get(flashcardDeck[1]), 1, "updated wrong card");
+        assert.deepStrictEqual(bucketMap.get(flashcardDeck[2]), 2, "updated wrong card");
+        assert.deepStrictEqual(bucketMap.get(flashcardDeck[4]), 4, "updated wrong card");
+    });
+    it("covers answer = AnswerDifficulty.HARD, " +
+        "card is not updated to a retriedBucket" +
+        "card is currently at bucket zero and answer = AnswerDifficulty.HARD", function() {
+        let bucketMap: Map<Flashcard, number> = createBucketMap([0,1,2,3,4]);
+
+        update(flashcardDeck[0], AnswerDifficulty.HARD, bucketMap, 3);
+        assert.deepStrictEqual(bucketMap.get(flashcardDeck[0]), 0, "card updated to wrong bucket");
+        assert.deepStrictEqual(bucketMap.get(flashcardDeck[1]), 1, "updated wrong card");
+        assert.deepStrictEqual(bucketMap.get(flashcardDeck[2]), 2, "updated wrong card");
+        assert.deepStrictEqual(bucketMap.get(flashcardDeck[3]), 3, "updated wrong card");
+        assert.deepStrictEqual(bucketMap.get(flashcardDeck[4]), 4, "updated wrong card");
+    });
+    it("covers answer = AnswerDifficulty.WRONG, " +
+        "card is not updated to a retriedBucket" +
+        "card is currently not at bucket zero or answer != AnswerDifficulty.HARD", function() {
+        let bucketMap: Map<Flashcard, number> = createBucketMap([0,1,2,3,4]);
+
+        update(flashcardDeck[4], AnswerDifficulty.WRONG, bucketMap, 5);
+        assert.deepStrictEqual(bucketMap.get(flashcardDeck[4]), 0, "card updated to wrong bucket");
+        assert.deepStrictEqual(bucketMap.get(flashcardDeck[0]), 0, "updated wrong card");
+        assert.deepStrictEqual(bucketMap.get(flashcardDeck[1]), 1, "updated wrong card");
+        assert.deepStrictEqual(bucketMap.get(flashcardDeck[2]), 2, "updated wrong card");
+        assert.deepStrictEqual(bucketMap.get(flashcardDeck[3]), 3, "updated wrong card");
     });
 });

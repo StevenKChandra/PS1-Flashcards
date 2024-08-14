@@ -59,3 +59,28 @@ export function practice(day: number, buckets: Array<Set<Flashcard>>, retiredBuc
     }
     return flashcardPractice;
 }
+
+/**
+ * Update step for the Modified-Leitner algorithm.
+ * @param card a flashcard the user just saw
+ * @param answer the difficulty of the user's answer to the flashcard
+ * @param bucketMap represents learning buckets before the flashcard was seen. Maps each flashcard in the map to a nonnegative integer bucket number in the range [0...retiredBucket] inclusive. Mutated by this method to put card in the appropriate bucket, as determined by the Modified-Leitner algorithm.
+ * @param retiredBucket number of retired bucket. Must be an integer >= 0.
+ * @returns void
+ */
+export function update(card: Flashcard, answer: AnswerDifficulty, bucketMap: Map<Flashcard, number>, retiredBucket: number): void {
+    let val = bucketMap.get(card);
+    if (answer === AnswerDifficulty.EASY) {
+        if (val != undefined){
+            bucketMap.set(card, val + 1);
+        }
+    }
+    else if (answer === AnswerDifficulty.HARD) {
+        if (val != undefined && val != 0){
+            bucketMap.set(card, val - 1);
+        }
+    }
+    else {
+        bucketMap.set(card, 0);
+    }
+}
