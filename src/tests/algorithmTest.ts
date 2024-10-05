@@ -1,6 +1,6 @@
 import assert from "assert";
-import { AnswerDifficulty, Flashcard} from "../flashcards.js";
-import { toBucketSets, getBucketRange, practice, update } from "../algorithm.js";
+import { AnswerDifficulty, Flashcard} from "../algorithm/flashcards.js";
+import { toBucketSets, getBucketRange, practice, update } from "../algorithm/algorithm.js";
 
 let flashcardDeck: Array<Flashcard> = new Array<Flashcard> ();
     flashcardDeck.push(new Flashcard("DRY", "Don't Repeat Yourself"));
@@ -103,7 +103,7 @@ describe("practice", function() {
         "bucket.length < retiredBucket", function() {
         const bucket: Array<Set<Flashcard>> = createBucketSets([0,0,2,3,1]);
         
-        const flashcardSet: ReadonlyArray<Flashcard> = practice(2, bucket, 10);
+        const flashcardSet: Array<Flashcard> = practice(2, bucket, 10);
         assert.strictEqual(flashcardSet.length, 3);
         assert(flashcardSet.includes(flashcardDeck[0]), "a card that should be included is not included");
         assert(flashcardSet.includes(flashcardDeck[1]), "a card that should be included is not included");
@@ -116,7 +116,7 @@ describe("practice", function() {
         "bucket.length < retiredBucket", function() {
         
         const bucket: Array<Set<Flashcard>> = createBucketSets([]);
-        const flashcardSet: ReadonlyArray<Flashcard> = practice(1, bucket, 10);
+        const flashcardSet: Array<Flashcard> = practice(1, bucket, 10);
         assert.strictEqual(flashcardSet.length, 0);
     });
     it("covers day != 1, " +
@@ -124,7 +124,7 @@ describe("practice", function() {
         "bucket.length >= retiredBucket", function() {
         
         const bucket: Array<Set<Flashcard>> = createBucketSets([0,0,3,2,2]);
-        const flashcardSet: ReadonlyArray<Flashcard> = practice(8, bucket, 3);
+        const flashcardSet: Array<Flashcard> = practice(8, bucket, 3);
         assert.strictEqual(flashcardSet.length, 4);
         assert(flashcardSet.includes(flashcardDeck[0]), "a card that should be included is not included");
         assert(flashcardSet.includes(flashcardDeck[1]), "a card that should be included is not included");

@@ -21,7 +21,7 @@ export function toBucketSets(bucketMap: Map<Flashcard, number>): ReadonlyArray<S
  * @param buckets a list of disjoint sets representing learning buckets, where buckets[i] is the set of cards in the ith bucket, for all 0 <= i < buckets.length
  * @returns a pair of integers [low, high], 0 <= low <= high, such that every card in buckets has an integer bucket number in the range [low...high] inclusive, and high - low is as small as possible
  */
-export function getBucketRange(buckets: Array<Set<Flashcard>>): ReadonlyArray<number> {
+export function getBucketRange(buckets: Array<Set<Flashcard>>): Array<number> {
     let low: number = NaN;
     let high: number = NaN;
     for (let i: number = 0; i < buckets.length; i++){
@@ -43,7 +43,7 @@ export function getBucketRange(buckets: Array<Set<Flashcard>>): ReadonlyArray<nu
     @returns an array of flashcards for practice on a particular day
     */
 
-export function practice(day: number, buckets: Array<Set<Flashcard>>, retiredBucket: number): ReadonlyArray<Flashcard> {
+export function practice(day: number, buckets: Array<Set<Flashcard>>, retiredBucket: number): Array<Flashcard> {
     let flashcardPractice: Array<Flashcard> = new Array<Flashcard> ();
     for (let i: number = 0; i < buckets.length; i++){
         if (i === retiredBucket){
@@ -53,7 +53,7 @@ export function practice(day: number, buckets: Array<Set<Flashcard>>, retiredBuc
         if (day % dayToRepeat != 0){
             continue;
         }
-        for (const j of buckets[i]){
+        for (const j of buckets[i].values()){
             flashcardPractice.push(j);
         }
     }

@@ -3,10 +3,9 @@ export enum AnswerDifficulty {
     HARD,
     EASY,
 }
-
 export class Flashcard {
-    readonly front: string;
-    readonly back: string;
+    public readonly front: string;
+    public readonly back: string;
 
     constructor(front: string, back: string) {
         this.front = front;
